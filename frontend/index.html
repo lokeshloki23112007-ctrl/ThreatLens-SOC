@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThreatLens — Phishing Intelligence &amp; SOC Prioritization</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="app-header">
+  <div class="app-header__brand">
+    <div class="app-header__mark">TL</div>
+    <div>
+      <h1 class="app-header__title">THREATLENS</h1>
+      <p class="app-header__subtitle">Phishing Intelligence &amp; SOC Prioritization</p>
+    </div>
+  </div>
+  <div class="app-header__status">
+    <span class="status-chip status-chip--mode">LOCAL ANALYSIS MODE</span>
+    <span class="status-chip status-chip--ready"><span class="dot"></span>SYSTEM READY</span>
+  </div>
+</header>
+
+<main class="app-main">
+
+  <!-- ============ INVESTIGATION INPUT ============ -->
+  <section class="panel input-panel" id="panel-input">
+    <div class="panel__head">
+      <h2 class="panel__title">01 · Investigation Input</h2>
+      <button class="btn btn--ghost btn--small" id="btn-reset">Reset workspace</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab is-active" data-tab="email" role="tab">EMAIL</button>
+      <button class="tab" data-tab="url" role="tab">URL</button>
+      <button class="tab" data-tab="eml" role="tab">UPLOAD .EML</button>
+    </div>
+
+    <!-- EMAIL TAB -->
+    <div class="tab-pane is-active" data-pane="email">
+      <div class="field-row">
+        <label class="field">
+          <span class="field__label">Sender address</span>
+          <input type="text" id="in-sender" placeholder="e.g. security-alert@paypa1-secure.com" autocomplete="off">
+        </label>
+        <label class="field">
+          <span class="field__label">Subject line</span>
+          <input type="text" id="in-subject" placeholder="e.g. Urgent: Verify your account within 24 hours">
+        </label>
+      </div>
+      <label class="field">
+        <span class="field__label">Email body</span>
+        <textarea id="in-body" rows="6" placeholder="Paste the full email body here. Include links exactly as written, e.g. [PayPal Account](http://paypa1-verify.tk/login)"></textarea>
+      </label>
+    </div>
+
+    <!-- URL TAB -->
+    <div class="tab-pane" data-pane="url">
+      <label class="field">
+        <span class="field__label">URL to analyze</span>
+        <input type="text" id="in-url" placeholder="e.g. http://192.168.14.2/secure/login-update.php">
+      </label>
+      <p class="field__hint">Standalone URL analysis skips content-based signals (urgency, credential language) and scores domain / URL structure only.</p>
+    </div>
+
+    <!-- EML TAB -->
+    <div class="tab-pane" data-pane="eml">
+      <label class="field field--upload" id="eml-dropzone">
+        <span class="field__label">Upload .eml file</span>
+        <input type="file" id="in-eml" accept=".eml,.txt,message/rfc822">
+        <span class="field__hint" id="eml-filename">No file selected — headers and body will be parsed automatically.</span>
+      </label>
+    </div>
+
+    <div class="input-panel__actions">
+      <span class="input-error" id="input-error"></span>
+      <button class="btn btn--primary" id="btn-analyze">
+        <span class="btn__icon">▣</span> ANALYZE THREAT
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ PIPELINE ============ -->
+  <section class="panel pipeline-panel is-hidden" id="panel-pipeline">
+    <div class="panel__head">
+      <h2 class="panel__title">02 · Analysis Pipeline</h2>
+      <span class="panel__meta" id="pipeline-status">RUNNING</span>
+    </div>
+    <ol class="pipeline" id="pipeline-track">
+      <li class="pipeline__stage" data-stage="parsed"><span class="pipeline__dot"></span><span class="pipeline__label">Email Parsed</span></li>
+      <li class="pipeline__stage" data-stage="domain"><span class="pipeline__dot"></span><span class="pipeline__label">Sender Domain</span></li>
+      <li class="pipeline__stage" data-stage="auth"><span class="pipeline__dot"></span><span class="pipeline__label">Authentication</span></li>
+      <li class="pipeline__stage" data-stage="url"><span class="pipeline__dot"></span><span class="pipeline__label">URL Intelligence</span></li>
+      <li class="pipeline__stage" data-stage="impersonation"><span class="pipeline__dot"></span><span class="pipeline__label">Impersonation</span></li>
+      <li class="pipeline__stage" data-stage="language"><span class="pipeline__dot"></span><span class="pipeline__label">Language</span></li>
+      <li class="pipeline__stage" data-stage="exposure"><span class="pipeline__dot"></span><span class="pipeline__label">Exposure</span></li>
+      <li class="pipeline__stage" data-stage="campaign"><span class="pipeline__dot"></span><span class="pipeline__label">Campaign Correlation</span></li>
+      <li class="pipeline__stage" data-stage="priority"><span class="pipeline__dot"></span><span class="pipeline__label">SOC Priority</span></li>
+    </ol>
+  </section>
+
+  <!-- ============ RESULTS WRAPPER ============ -->
+  <div class="results is-hidden" id="results">
+
+    <!-- VERDICT -->
+    <section class="panel verdict-panel">
+      <div class="panel__head">
+        <h2 class="panel__title">03 · Threat Verdict</h2>
+        <span class="panel__meta" id="case-id-tag">CASE —</span>
+      </div>
+      <div class="verdict-grid">
+        <div class="verdict-classification">
+          <span class="verdict-classification__label">Classification</span>
+          <span class="verdict-classification__value" id="v-classification">—</span>
+        </div>
+        <div class="verdict-metric">
+          <span class="verdict-metric__label">Risk score</span>
+          <div class="riskbar"><div class="riskbar__fill" id="v-riskbar"></div></div>
+          <span class="verdict-metric__value" id="v-risk">0/100</span>
+        </div>
+        <div class="verdict-metric">
+          <span class="verdict-metric__label">Confidence</span>
+          <span class="pill" id="v-confidence">—</span>
+        </div>
+        <div class="verdict-metric">
+          <span class="verdict-metric__label">SOC priority</span>
+          <span class="pill" id="v-priority">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- EVIDENCE -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">04 · Evidence</h2>
+        <span class="panel__meta">Signal breakdown</span>
+      </div>
+      <div class="evidence-grid">
+        <div class="evidence-card">
+          <h3 class="evidence-card__title">Authentication <span class="tag tag--demo">DEMO SIGNAL</span></h3>
+          <div class="kv-list" id="ev-auth"></div>
+        </div>
+        <div class="evidence-card">
+          <h3 class="evidence-card__title">Domain</h3>
+          <div class="kv-list" id="ev-domain"></div>
+        </div>
+        <div class="evidence-card">
+          <h3 class="evidence-card__title">URL</h3>
+          <div class="kv-list" id="ev-url"></div>
+        </div>
+        <div class="evidence-card">
+          <h3 class="evidence-card__title">Content</h3>
+          <div class="kv-list" id="ev-content"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPLANATION -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">05 · Why ThreatLens Flagged This</h2>
+        <span class="panel__meta" id="explain-count">0 reasons</span>
+      </div>
+      <ul class="reason-list" id="reason-list"></ul>
+    </section>
+
+    <!-- CAMPAIGN -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">06 · Campaign Intelligence</h2>
+        <span class="panel__meta" id="campaign-status">—</span>
+      </div>
+      <div class="campaign-grid" id="campaign-grid"></div>
+    </section>
+
+    <!-- BLAST RADIUS -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">07 · Blast Radius</h2>
+        <span class="panel__meta">One email → multiple possible victims</span>
+      </div>
+      <div class="blast-grid" id="blast-grid"></div>
+      <div class="blast-depts">
+        <span class="blast-depts__label">Affected departments</span>
+        <div class="chip-row" id="blast-departments"></div>
+      </div>
+    </section>
+
+    <!-- SOC PRIORITY -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">08 · SOC Priority Computation</h2>
+        <span class="panel__meta">How the priority score was derived</span>
+      </div>
+      <div class="priority-formula" id="priority-formula"></div>
+      <div class="priority-outcome">
+        <div class="priority-outcome__level" id="priority-level">—</div>
+        <div class="priority-outcome__action" id="priority-action">—</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============ INVESTIGATION QUEUE ============ -->
+  <section class="panel queue-panel">
+    <div class="panel__head">
+      <h2 class="panel__title">09 · SOC Investigation Queue</h2>
+      <span class="panel__meta" id="queue-capacity">0 / 5 analyst slots used</span>
+    </div>
+    <p class="queue-intro">What should the SOC investigate first? Ranked by computed priority score. Capacity is limited — lower-priority cases are displaced as higher-priority ones arrive.</p>
+    <div class="queue-table-wrap">
+      <table class="queue-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Case</th>
+            <th>Campaign</th>
+            <th>Exposure</th>
+            <th>Risk</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="queue-body">
+          <tr class="queue-empty-row"><td colspan="7">No active cases. Analyze a threat to populate the queue.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <span>ThreatLens Frontend — Demo Rule Engine (client-side heuristics). Multi-signal detection, DNS/authentication, and persistence run on the future Python + PostgreSQL backend.</span>
+</footer>
+
+<script src="js/script.js"></script>
+</body>
+</html>
