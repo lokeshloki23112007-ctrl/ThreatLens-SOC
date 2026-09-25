@@ -1,2 +1,10 @@
+import os
+import psycopg
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 def get_database_connection():
-    return {"status": "database connection stub", "driver": "sqlite"}
+    return psycopg.connect(DATABASE_URL)

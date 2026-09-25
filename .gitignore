@@ -1,3 +1,15 @@
-﻿.env
-*.pyc
+# Environment variables
+.env
+
+# Python
 __pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
