@@ -227,7 +227,7 @@ async function analyzeThreat() {
 
             errorBox.textContent =
                 "Unable to connect to ThreatLens backend. " +
-                "Make sure FastAPI is running on port 8000.";
+                "Make sure FastAPI is running on port 8001.";
 
         }
 
